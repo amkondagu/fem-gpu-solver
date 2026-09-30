@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>proposal</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<h1 id="project-proposal-ece-379k">Project Proposal — ECE 379K</h1>
+<p><strong>Team name:</strong> Squids</p>
+<p><strong>Members (name + EID):</strong> Nitin Vunnam (ncv383), Aneesh
+Kondagunturi (amk5537), Emma Wang (ew24223), Aashrith Attelli
+(aa85938)</p>
+<p><strong>Date:</strong> 9/21/2026</p>
+<hr />
+<h2 id="what-we-are-building">1. What we are building</h2>
+<p>We are building a program that makes large physics simulations run
+faster by reorganizing their data and then dividing the work between two
+parts of a computer: the CPU, which handles general-purpose tasks, and
+the GPU, which is designed to perform many similar calculations at the
+same time.</p>
+<p>Large engineering simulations often divide a physical object into
+many small pieces and calculate how those pieces affect one another. As
+the simulation becomes more detailed, solving the resulting equations
+can take a long time. Some of that delay comes from related data being
+stored far apart in memory, which makes it slower for the processor to
+access.</p>
+<p>Our project will test whether reorganizing the data before solving
+the problem improves overall performance. By December, we will have a
+program that solves a collection of real simulation problems on both the
+CPU and GPU and measures when the extra time spent reorganizing the data
+is worth the speedup it provides later.</p>
+<p>We will verify that all versions produce essentially the same
+numerical result. For our largest practical test cases, our goal is for
+the GPU-accelerated version to run at least <strong>2× faster than our
+multithreaded CPU baseline</strong>. We will test at least <strong>25
+problems</strong> and report how many repeated solves are needed, if
+any, before the one-time cost of reorganizing the data pays for
+itself.</p>
+<hr />
+<h2 id="who-is-doing-what">2. Who is doing what</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Team member</th>
+<th>Owns</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Aashrith Attelli (aa85938)</strong></td>
+<td>Builds and tests the Matrix Market reader and parallel input
+conversion, then implements and profiles the CUDA sparse matrix-vector
+multiplication kernels.</td>
+</tr>
+<tr class="even">
+<td><strong>Nitin Vunnam (ncv383)</strong></td>
+<td>Builds the serial and OpenMP CPU baselines and scheduling study,
+then implements the GPU dot-product and vector-update operations used by
+the solver.</td>
+</tr>
+<tr class="odd">
+<td><strong>Aneesh Kondagunturi (amk5537)</strong></td>
+<td>Builds and evaluates the Reverse Cuthill-McKee reordering, then
+integrates the GPU-resident iterative solver and measures when
+reordering becomes worthwhile.</td>
+</tr>
+<tr class="even">
+<td><strong>Emma Wang (ew24223)</strong></td>
+<td>Builds the timing and correctness framework, manages the benchmark
+collection, and evaluates alternate GPU sparse formats and
+cuSPARSE.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What we will do together:</strong><br />
+We will agree on shared input/output conventions, perform the first
+integration, review each other’s code, analyze results, and prepare the
+final report and presentation.</p>
+<p><strong>Dependencies, and what the waiting person does
+meanwhile:</strong><br />
+We will place several test matrices in the repository during the first
+week so GPU development can begin immediately. The benchmarking
+framework can use the CPU baseline before the GPU version is ready, and
+the solver can use reference operations while custom kernels are still
+being completed.</p>
+<p><strong>Milestones:</strong></p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>By when</th>
+<th>What exists</th>
+<th>Who</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Sept. 29</strong></td>
+<td>CPU baseline, input conversion, initial reordering, benchmark
+harness, and shared test matrices.</td>
+<td>All</td>
+</tr>
+<tr class="even">
+<td><strong>Oct. 10</strong></td>
+<td>First end-to-end CPU pipeline and initial scaling measurements.</td>
+<td>Nitin, Aashrith, Aneesh</td>
+</tr>
+<tr class="odd">
+<td><strong>Oct. 30</strong></td>
+<td>Core CUDA operations working and benchmarked.</td>
+<td>Aashrith, Nitin</td>
+</tr>
+<tr class="even">
+<td><strong>Nov. 20</strong></td>
+<td>GPU solver integrated and first CPU/GPU break-even results.</td>
+<td>Emma, Aneesh</td>
+</tr>
+<tr class="odd">
+<td><strong>Dec. 1</strong></td>
+<td>Final benchmark sweep and analysis complete.</td>
+<td>All</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="what-could-go-wrong">3. What could go wrong</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>What could go wrong</th>
+<th>How we would notice early</th>
+<th>What we would do instead</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Reordering does not improve performance enough to recover its
+cost.</td>
+<td>Measure reordering and solve time on several matrices by
+Oct. 15.</td>
+<td>Report the measured break-even behavior, including cases where
+reordering does not pay off.</td>
+</tr>
+<tr class="even">
+<td>The GPU provides little speedup because problems are too small or
+data-transfer time dominates.</td>
+<td>Benchmark several problem sizes as soon as the first GPU operation
+works and measure transfer and computation time separately.</td>
+<td>Focus on larger problems, keep data on the GPU across solver
+iterations, and report when GPU execution becomes worthwhile.</td>
+</tr>
+<tr class="odd">
+<td>A team member falls behind or leaves the project.</td>
+<td>Review milestone progress weekly; two consecutive missed goals
+trigger a re-cut of ownership.</td>
+<td>Redistribute the core work and remove optional format variants and
+comparison experiments.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reduced scope:</strong><br />
+If we lose significant time, we will keep the core pipeline: data
+loading, reordering, a multithreaded CPU baseline, GPU sparse
+matrix-vector multiplication, and a GPU iterative solver. We will reduce
+the benchmark set to 10 matrices and remove alternate sparse formats and
+the cuSPARSE comparison.</p>
+<hr />
+<h2 id="what-we-will-need">4. What we will need</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>What</th>
+<th>Status</th>
+<th>Needed by</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Personal/ECE Linux systems for development and debugging</td>
+<td><strong>have</strong></td>
+<td>Now</td>
+</tr>
+<tr class="even">
+<td>Access to one Lonestar6 CPU node and one NVIDIA A100 GPU node
+through the course TACC allocation</td>
+<td><strong>need from you</strong></td>
+<td>Oct. 1</td>
+</tr>
+<tr class="odd">
+<td>C++ compiler, OpenMP, ThreadSanitizer, CUDA, cuSPARSE, and GPU
+profiling tools</td>
+<td><strong>can get</strong></td>
+<td>Oct. 1</td>
+</tr>
+<tr class="even">
+<td>25–40 matrices from the public SuiteSparse Matrix Collection</td>
+<td><strong>can get</strong></td>
+<td>Sept. 29</td>
+</tr>
+<tr class="odd">
+<td>GitHub repository for shared code and tests</td>
+<td><strong>have</strong></td>
+<td>Now</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

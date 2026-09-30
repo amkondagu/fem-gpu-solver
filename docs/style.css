@@ -1,0 +1,160 @@
+/* Compact ECE 379K proposal styling */
+
+@page {
+	size: Letter;
+	margin: 0.55in 0.6in;
+}
+
+body {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 10.5pt;
+	line-height: 1.18;
+	color: #222;
+	padding: 0;
+	margin: 0;
+}
+
+/* UT burnt orange */
+:root {
+	--ut-orange: #BF5700;
+	--light-gray: #f5f5f5;
+	--border-gray: #b8b8b8;
+}
+
+/* Headings */
+
+h1 {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 18pt;
+	color: var(--ut-orange);
+	text-align: center;
+	border-bottom: 2px solid var(--ut-orange);
+	padding-bottom: 4px;
+	margin: 0 0 8px 0;
+}
+
+h2 {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 13pt;
+	color: var(--ut-orange);
+	margin: 10px 0 4px 0;
+	padding-bottom: 1px;
+	border-bottom: 1px solid #ddd;
+}
+
+h3 {
+	font-family: "Times New Roman", Times, serif;
+	font-size: 11pt;
+	color: #333;
+	margin: 7px 0 3px 0;
+}
+
+/* Paragraphs */
+
+p {
+	margin: 4px 0;
+}
+
+strong {
+	font-weight: bold;
+}
+
+/* Horizontal rules */
+
+hr {
+	border: 0;
+	border-top: 1px solid #bbb;
+	margin: 7px 0;
+}
+
+/* Tables */
+
+table {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 5px 0 7px 0;
+	font-size: 9.2pt;
+	line-height: 1.1;
+	page-break-inside: avoid;
+}
+
+th,
+td {
+	border: 1px solid var(--border-gray);
+	padding: 4px 5px;
+	vertical-align: top;
+}
+
+th {
+	background-color: #f3e7df;
+	color: #222;
+	font-weight: bold;
+	text-align: left;
+}
+
+/* Lists */
+
+ul,
+ol {
+	margin-top: 3px;
+	margin-bottom: 5px;
+	padding-left: 20px;
+}
+
+li {
+	margin: 1px 0;
+}
+
+/* Code, if any remains */
+
+pre {
+	background: #f5f5f5;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	margin: 4px 0;
+	padding: 5px;
+}
+
+code {
+	font-family: Consolas, Monaco, monospace;
+	font-size: 9pt;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	overflow-wrap: anywhere;
+}
+
+:not(pre) > code {
+	background: #f2f2f2;
+	padding: 1px 3px;
+	border-radius: 2px;
+	color: #333;
+}
+
+/* Blockquotes, though these should not be in final submission */
+
+blockquote {
+	border-left: 3px solid var(--ut-orange);
+	padding-left: 8px;
+	margin: 5px 0;
+	color: #555;
+}
+
+/* Images */
+
+img {
+	max-width: 100%;
+}
+
+/* Try to prevent ugly page breaks */
+
+h1,
+h2,
+h3 {
+	page-break-after: avoid;
+}
+
+table,
+p {
+	orphans: 2;
+	widows: 2;
+}
