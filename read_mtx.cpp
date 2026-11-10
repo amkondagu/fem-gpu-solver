@@ -1,25 +1,9 @@
+#include "read_mtx.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include <string>
-#include <vector>
-
-struct COO {
-    int numRows; 
-    int numCols;
-    std::vector<int> rows;
-    std::vector<int> cols;
-    std::vector<double> vals;
-};
-
-struct CSR {
-    int numRows; 
-    int numCols;
-    std::vector<int> rowIdx;
-    std::vector<int> colIdx;
-    std::vector<double> vals;
-};
 
 COO read_mtx(const std::string& matrix) {
 
@@ -90,6 +74,7 @@ CSR convert_COO_CSR(const COO& coo) {
     return csr; 
 }
 
+#ifdef MTX_READER_DEMO
 int main(void) {
     try {
         COO coo = read_mtx("matrices/generated_symmetric_matrices/elas2d_n32_lambda10p0.mtx");
@@ -122,3 +107,4 @@ int main(void) {
         return 1;
     }
 }
+#endif
