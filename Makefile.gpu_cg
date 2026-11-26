@@ -1,0 +1,28 @@
+NVCC ?= nvcc
+
+NVCCFLAGS = -O3 -std=c++17 -arch=sm_80 -Iinclude -I. -Xcompiler -fopenmp
+
+TARGET = gpu_cg
+
+SOURCES = \
+	gpu_cg.cu \
+	spmv_kernels.cu \
+	read_mtx.cpp \
+	src/spmv.cpp \
+	src/rcm.cpp
+
+HEADERS = \
+	include/read_mtx.h \
+	include/spmv.h \
+	include/rcm.h \
+	spmv_kernels.cuh
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(SOURCES) $(HEADERS)
+	$(NVCC) $(NVCCFLAGS) $(SOURCES) -o $(TARGET)
+
+clean:
+	rm -f $(TARGET)

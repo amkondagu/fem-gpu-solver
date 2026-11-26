@@ -1,25 +1,9 @@
+#include "read_mtx.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
-#include <string>
-#include <vector>
-
-struct COO {
-    int numRows; 
-    int numCols;
-    std::vector<int> rows;
-    std::vector<int> cols;
-    std::vector<double> vals;
-};
-
-struct CSR {
-    int numRows; 
-    int numCols;
-    std::vector<int> rowIdx;
-    std::vector<int> colIdx;
-    std::vector<double> vals;
-};
 
 COO read_mtx(const std::string& matrix) {
 
@@ -31,6 +15,18 @@ COO read_mtx(const std::string& matrix) {
 
     COO coo; 
     std::string s;
+    std::getline(f, s);
+
+    std::istringstream header(s);
+    std::string matrixMarket;
+    std::string object;
+    std::string format;
+    std::string field;
+    std::string symmetry;
+
+    header >> matrixMarket >> object >> format >> field >> symmetry;
+
+    bool symmetric = (symmetry == "symmetric");
 
     while (std::getline(f, s)) {
         if (!s.empty() && s[0] == '%') {
@@ -51,6 +47,14 @@ COO read_mtx(const std::string& matrix) {
             coo.rows.push_back(row-1);  //because c++ is 0 indexed
             coo.cols.push_back(col-1);
             coo.vals.push_back(val);
+
+            // one triangle, so add the mirrored entry too.
+            // Do not duplicate diagonal entries.
+            if (symmetric && row != col) {
+                coo.rows.push_back(col-1);
+                coo.cols.push_back(row-1);
+                coo.vals.push_back(val);
+            }
         }
 
         break; 
@@ -88,37 +92,4 @@ CSR convert_COO_CSR(const COO& coo) {
     } 
     
     return csr; 
-}
-
-int main(void) {
-    try {
-        COO coo = read_mtx("matrices/generated_symmetric_matrices/elas2d_n32_lambda10p0.mtx");
-        CSR csr = convert_COO_CSR(coo);
-
-        std::cout << "Rows: " << coo.numRows << "\n";
-        std::cout << "Cols: " << coo.numCols << "\n";
-        std::cout << "Entries read: " << coo.vals.size() << "\n";
-
-        std::cout << "\nFirst few entries:\n";
-
-        for (int i=0; i < 5; i++) {
-            std::cout << "(" << coo.rows[i] << ", " << coo.cols[i] << ") = " << coo.vals[i] << "\n";
-        }
-
-        for (int i=0; i < 5; i++) {
-            std::cout << "Row " << i << ": ";
-
-            for (int j=csr.rowIdx[i]; j < csr.rowIdx[i+1]; j++) {
-                std::cout << "(" << csr.colIdx[j] << ", " << csr.vals[j] << ") ";
-            }
-
-            std::cout << "\n";
-        }
-
-        return 0;
-    }
-    catch (const std::exception& e) {
-        std::cerr << "ERROR: " << e.what() << "\n";
-        return 1;
-    }
 }

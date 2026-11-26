@@ -1,0 +1,29 @@
+NVCC ?= nvcc
+
+NVCCFLAGS = -O3 -std=c++17 -Iinclude -I. -Xcompiler -fopenmp
+
+TARGET = spmv_gpu
+
+SOURCES = \
+	spmv_gpu.cu \
+	spmv_kernels.cu \
+	read_mtx.cpp \
+	src/spmv.cpp
+
+HEADERS = \
+	include/read_mtx.h \
+	include/spmv.h \
+	spmv_kernels.cuh
+
+.PHONY: all clean run-all
+
+all: $(TARGET)
+
+$(TARGET): $(SOURCES) $(HEADERS)
+	$(NVCC) $(NVCCFLAGS) $(SOURCES) -lcusparse -o $(TARGET)
+
+run-all: $(TARGET)
+	./run_gpu_benchmarks.sh
+
+clean:
+	rm -f $(TARGET)
