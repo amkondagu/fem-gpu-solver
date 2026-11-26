@@ -19,7 +19,7 @@ using Vector = std::vector<double>;
 using Spmv = std::function<void(const CSR&, const Vector&, Vector&)>;
 
 struct CgOptions {
-    int max_iterations = 1000;
+    int max_iterations = 50000;
     double rtol = 1e-8;
     double atol = 0.0;
     bool record_history = false;
@@ -65,6 +65,12 @@ long double normalized_dot(const Vector& a, const Vector& b,
     return sum;
 }
 
+long double dot(const Vector& a, const Vector& b) {
+    long double sum = 0;
+    for (std::size_t i = 0; i < a.size(); ++i) sum += static_cast<long double>(a[i]) * b[i];
+    return sum;
+}
+
 void check_vectors(const CSR& a, const Vector& b, const Vector& x) {
     if (a.numRows < 0 || a.numCols < 0 || b.size() != static_cast<std::size_t>(a.numRows) ||
         x.size() != static_cast<std::size_t>(a.numCols) || !finite_vector(b) || !finite_vector(x))
@@ -81,6 +87,11 @@ bool residual(const CSR& a, const Vector& b, const Vector& x, const Spmv& multip
         r[i] = static_cast<double>(static_cast<long double>(b[i]) - ax[i]);
     return finite_vector(r);
 }
+
+void apply_jacobi(const Vector& inverse_diagonal, const Vector& r, Vector& z) {
+    z.resize(r.size());
+    for (std::size_t i = 0; i < r.size(); ++i) z[i] = inverse_diagonal[i] * r[i];
+}
 }  // namespace detail
 
 double vector_norm(const Vector& values) { return static_cast<double>(detail::norm(values)); }
@@ -94,13 +105,30 @@ double true_residual_norm(const CSR& a, const Vector& b, const Vector& x, const 
     return vector_norm(r);
 }
 
-CgResult conjugate_gradient(const CSR& a, const Vector& b, const Spmv& multiply,
-                            const CgOptions& options = {}, const Spmv& verify_multiply = {},
-                            const Vector& initial_guess = {}) {
+Vector build_jacobi_inverse(const CSR& a) {
+    if (a.numRows != a.numCols || a.numRows < 0)
+        throw std::invalid_argument("Jacobi preconditioning requires a square matrix");
+    Vector inverse_diagonal(static_cast<std::size_t>(a.numRows));
+    for (int row = 0; row < a.numRows; ++row) {
+        long double diagonal = 0;
+        for (int k = a.rowIdx[row]; k < a.rowIdx[row + 1]; ++k)
+            if (a.colIdx[k] == row) diagonal += a.vals[k];
+        if (!std::isfinite(diagonal) || diagonal <= 0)
+            throw std::invalid_argument("Jacobi-PCG requires a finite positive diagonal");
+        inverse_diagonal[static_cast<std::size_t>(row)] = static_cast<double>(1 / diagonal);
+    }
+    return inverse_diagonal;
+}
+
+CgResult jacobi_pcg(const CSR& a, const Vector& b, const Spmv& multiply,
+                    const Vector& inverse_diagonal, const CgOptions& options = {},
+                    const Spmv& verify_multiply = {}, const Vector& initial_guess = {}) {
     if (a.numRows != a.numCols || a.numRows < 0 || !multiply || options.max_iterations < 0 ||
         !std::isfinite(options.rtol) || options.rtol < 0 ||
-        !std::isfinite(options.atol) || options.atol < 0)
-        throw std::invalid_argument("CG needs a square SPD matrix, SpMV callback and valid tolerances");
+        !std::isfinite(options.atol) || options.atol < 0 ||
+        inverse_diagonal.size() != static_cast<std::size_t>(a.numRows) ||
+        !detail::finite_vector(inverse_diagonal))
+        throw std::invalid_argument("Jacobi-PCG needs a square SPD matrix, inverse diagonal, SpMV callback and valid tolerances");
     CgResult result;
     result.x = initial_guess.empty() ? Vector(static_cast<std::size_t>(a.numCols), 0) : initial_guess;
     detail::check_vectors(a, b, result.x);
@@ -124,34 +152,34 @@ CgResult conjugate_gradient(const CSR& a, const Vector& b, const Spmv& multiply,
         return std::move(result);
     };
 
-    // Start with r=b-A*x and p=r; x defaults to zero.
+    // Start with r=b-A*x, z=M^{-1}r and p=z; x defaults to zero.
     Vector r;
     if (!detail::residual(a, b, result.x, verify, r)) return finish("numerical_failure");
     long double r_norm = detail::norm(r);
     if (options.record_history) result.residual_history.push_back(static_cast<double>(r_norm));
     if (!std::isfinite(r_norm)) return finish("numerical_failure");
     if (r_norm <= tolerance) return finish("converged");
-    Vector p = r, ap;
+    Vector z, p, ap;
+    detail::apply_jacobi(inverse_diagonal, r, z);
+    if (!detail::finite_vector(z)) return finish("numerical_failure");
+    long double rho = detail::dot(r, z);
+    if (!std::isfinite(rho) || rho <= 0) return finish("numerical_failure");
+    p = z;
 
     for (int iteration = 0; iteration < options.max_iterations; ++iteration) {
         multiply(a, p, ap);
         if (ap.size() != p.size() || !detail::finite_vector(ap)) return finish("numerical_failure");
-        const long double p_norm = detail::norm(p), ap_norm = detail::norm(ap);
-        if (!std::isfinite(p_norm) || !std::isfinite(ap_norm)) return finish("numerical_failure");
-        const long double curvature = p_norm > 0 && ap_norm > 0
-            ? detail::normalized_dot(p, ap, p_norm, ap_norm) : 0;
-        if (!std::isfinite(curvature)) return finish("numerical_failure");
-        if (curvature <= 0) return finish("nonpositive_curvature");
+        const long double p_ap = detail::dot(p, ap);
+        if (!std::isfinite(p_ap)) return finish("numerical_failure");
+        if (p_ap <= 0) return finish("nonpositive_curvature");
 
-        // Equivalent to alpha=(r dot r)/(p dot A*p), without squaring large norms.
-        const long double alpha = (r_norm / p_norm) * (r_norm / ap_norm) / curvature;
+        const long double alpha = rho / p_ap;
         if (!std::isfinite(alpha)) return finish("numerical_failure");
         for (std::size_t i = 0; i < r.size(); ++i) {
             result.x[i] = static_cast<double>(result.x[i] + alpha * p[i]);
             r[i] = static_cast<double>(r[i] - alpha * ap[i]);
         }
         result.iterations = iteration + 1;
-        const long double previous_norm = r_norm;
         r_norm = detail::norm(r);
         if (options.record_history) result.residual_history.push_back(static_cast<double>(r_norm));
         if (!detail::finite_vector(result.x) || !std::isfinite(r_norm)) return finish("numerical_failure");
@@ -164,17 +192,25 @@ CgResult conjugate_gradient(const CSR& a, const Vector& b, const Spmv& multiply,
             if (actual_norm <= tolerance) return finish("converged");
             // Roundoff drift: restart from the true residual within the same budget.
             r = std::move(actual);
-            p = r;
             r_norm = actual_norm;
+            detail::apply_jacobi(inverse_diagonal, r, z);
+            if (!detail::finite_vector(z)) return finish("numerical_failure");
+            rho = detail::dot(r, z);
+            if (!std::isfinite(rho) || rho <= 0) return finish("numerical_failure");
+            p = z;
             if (options.record_history) result.residual_history.back() = static_cast<double>(r_norm);
             continue;
         }
 
-        // beta=(r_new dot r_new)/(r_old dot r_old); update the search direction.
-        const long double ratio = r_norm / previous_norm, beta = ratio * ratio;
+        detail::apply_jacobi(inverse_diagonal, r, z);
+        if (!detail::finite_vector(z)) return finish("numerical_failure");
+        const long double rho_new = detail::dot(r, z);
+        if (!std::isfinite(rho_new) || rho_new <= 0) return finish("numerical_failure");
+        const long double beta = rho_new / rho;
         if (!std::isfinite(beta)) return finish("numerical_failure");
-        for (std::size_t i = 0; i < p.size(); ++i) p[i] = static_cast<double>(r[i] + beta * p[i]);
+        for (std::size_t i = 0; i < p.size(); ++i) p[i] = static_cast<double>(z[i] + beta * p[i]);
         if (!detail::finite_vector(p)) return finish("numerical_failure");
+        rho = rho_new;
     }
     return finish("max_iterations");
 }

@@ -100,14 +100,15 @@ bool run_benchmark(const std::string& matrix_name, const CSR& original,
     for (int ordering = 0; ordering < (reordered ? 2 : 1); ++ordering) {
         const CSR& matrix = ordering ? *reordered : original;
         const Vector& b = ordering ? permuted_rhs : rhs;
+        const Vector inverse_diagonal = build_jacobi_inverse(matrix);
         for (const auto& backend : cases) {
             for (int warmup = 0; warmup < options.warmups; ++warmup) {
-                auto result = conjugate_gradient(matrix, b, backend.multiply, solver_options, serial_multiply);
+                auto result = jacobi_pcg(matrix, b, backend.multiply, inverse_diagonal, solver_options, serial_multiply);
                 all_correct = all_correct && result.status == "converged";
             }
             for (int repeat = 0; repeat < options.repeats; ++repeat) {
                 const auto start = Clock::now();
-                const auto result = conjugate_gradient(matrix, b, backend.multiply, solver_options, serial_multiply);
+                const auto result = jacobi_pcg(matrix, b, backend.multiply, inverse_diagonal, solver_options, serial_multiply);
                 const double solve_ms = milliseconds(start);
 
                 // Restore the solution, then check against the ORIGINAL system.
@@ -152,7 +153,8 @@ int main(int argc, char** argv) {
         };
         const std::string output = argc > 1 ? argv[1] : "/tmp/fem_demo.csv";
         const bool correct = fem::run_benchmark("two_by_two", matrix, {1, 2}, multiply, {}, output);
-        const auto solution = fem::conjugate_gradient(matrix, {1, 2}, multiply);
+        const auto inverse_diagonal = fem::build_jacobi_inverse(matrix);
+        const auto solution = fem::jacobi_pcg(matrix, {1, 2}, multiply, inverse_diagonal);
         std::cout << "x = [" << solution.x[0] << ", " << solution.x[1] << "]  iterations = "
                   << solution.iterations << "  relative residual = " << solution.relative_residual << '\n';
         std::cout << (correct ? "Checks passed; wrote " : "Checks failed; wrote ") << output << '\n';

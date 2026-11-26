@@ -9,20 +9,22 @@ fi
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 bin="./build/run_cpu_benchmarks"
-matrix_dir="matrices/generated_symmetric_matrices"
-result_dir="${1:-results}"
+matrix_dir="matrices/NIST_matrices"
+result_dir="${1:-results/cpu/nist}"
 
 mkdir -p "$result_dir"
 
-matrices=(
-    "lap2d_128x128"
-    "lap2d7pt_512x512"
-    "elas2d_n64_lambda10p0"
-)
+for matrix_path in "$matrix_dir"/*.mtx; do
+    matrix="$(basename "$matrix_path" .mtx)"
 
-for matrix in "${matrices[@]}"; do
     printf '\nBenchmarking %s\n' "$matrix"
-    "$bin" "$matrix_dir/$matrix.mtx" "$result_dir/$matrix.csv"
+
+    if "$bin" "$matrix_path" "$result_dir/$matrix.csv"; then
+	printf 'PASS: %s\n' "$matrix"
+    else
+	printf 'FAILED OR DID NOT CONVERGE: %s\n' "$matrix"
+    fi
+
     if [[ "${PLOT_RESULTS:-1}" == 1 ]]; then
         python3 plot_results.py "$result_dir/$matrix.csv" \
             --output-dir "$result_dir/${matrix}_plots"
