@@ -23,7 +23,6 @@
 *.dll
 *.so.*
 
-
 # Fortran module files
 *.mod
 *.smod
@@ -38,6 +37,8 @@
 *.exe
 *.out
 *.app
+gpu_cg
+spmv_gpu
 
 # Build directories
 build/
@@ -68,4 +69,13 @@ vcpkg_installed/
 Testing/
 .cache/
 
+# SLURM output
+logs/slurm/
+*.o[0-9]*
+*.e[0-9]*
+
+# Matrices
 matrices/
+
+# Benchmark results
+results/
