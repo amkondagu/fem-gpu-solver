@@ -1,0 +1,11 @@
+matrix,n,nnz,ordering,backend,repeat,solve_ms,iterations,relative_residual,status,correct,reordering_ms,rhs_permutation_ms,gpu_setup_ms,solve_plus_setup_ms,end_to_end_ms,rtol,atol,max_iterations
+"s3rmt3m1",5489,219521,original,gpu_warp_jacobi_pcg,0,1503.18,49985,4.75358e-06,max_iterations,0,0,0,1.11439,1504.29,1504.29,1e-08,0,50000
+"s3rmt3m1",5489,219521,original,gpu_warp_jacobi_pcg,1,1503.52,49992,5.44446e-06,max_iterations,0,0,0,1.11439,1504.64,1504.64,1e-08,0,50000
+"s3rmt3m1",5489,219521,original,gpu_warp_jacobi_pcg,2,1503.99,49959,2.4828e-06,max_iterations,0,0,0,1.11439,1505.11,1505.11,1e-08,0,50000
+"s3rmt3m1",5489,219521,original,gpu_warp_jacobi_pcg,3,1503.13,49992,4.80674e-06,max_iterations,0,0,0,1.11439,1504.25,1504.25,1e-08,0,50000
+"s3rmt3m1",5489,219521,original,gpu_warp_jacobi_pcg,4,1502.06,49957,1.35757e-06,max_iterations,0,0,0,1.11439,1503.17,1503.17,1e-08,0,50000
+"s3rmt3m1",5489,219521,reordered,gpu_warp_jacobi_pcg,0,1504.94,49999,4.93022e-06,max_iterations,0,9.28889,0.019277,1.6963,1506.64,1515.95,1e-08,0,50000
+"s3rmt3m1",5489,219521,reordered,gpu_warp_jacobi_pcg,1,1501.51,49965,4.40838e-06,max_iterations,0,9.28889,0.019277,1.6963,1503.21,1512.51,1e-08,0,50000
+"s3rmt3m1",5489,219521,reordered,gpu_warp_jacobi_pcg,2,1504.32,49959,3.68683e-06,max_iterations,0,9.28889,0.019277,1.6963,1506.02,1515.33,1e-08,0,50000
+"s3rmt3m1",5489,219521,reordered,gpu_warp_jacobi_pcg,3,1503.18,49955,4.3138e-06,max_iterations,0,9.28889,0.019277,1.6963,1504.88,1514.18,1e-08,0,50000
+"s3rmt3m1",5489,219521,reordered,gpu_warp_jacobi_pcg,4,1502.56,49986,4.45847e-06,max_iterations,0,9.28889,0.019277,1.6963,1504.26,1513.57,1e-08,0,50000

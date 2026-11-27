@@ -74,7 +74,7 @@ for matrix in \
     lap2d_128x128 \
     lap2d_256x256 \
     lap2d_512x512 \
-    lap2d_768x786
+    lap2d_768x768
 do
     echo
     echo "CPU Jacobi-PCG: $matrix"
